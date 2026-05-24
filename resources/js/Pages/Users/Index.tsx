@@ -27,7 +27,7 @@ const Index = ({ users }: Props) => {
         setOpen(true);
         setSelectedUser(user)
       }} />
-{ open && <UserForm mode={type} user={selectedUser}  onClose={() => setOpen(false)} />}
+{ open && <UserForm mode={type} user={selectedUser}  onClose={() => {setOpen(false); setSelectedUser(undefined)}} />}
     </div>
   )
 }

@@ -1,6 +1,10 @@
 import { User } from "@/types";
 import { router } from "@inertiajs/react";
 import { useState } from "react";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 type Props = {
     users: User[];
@@ -9,39 +13,85 @@ type Props = {
 
 const UsersTable = ({ users, onEdit }: Props) => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const handleDelete = () => {
-     if (deleteId) {
-        router.delete(`/users/${deleteId}`, {
-            onSuccess: () => setDeleteId(null)
-        })
-    }
+ 
+  const confirmDelete = (userId: number, userName: string) => {
+    MySwal.fire({
+      title: "Delete User?",
+      html: (
+        <div className="text-sm text-gray-500 text-center">
+          Are you sure you want to delete <span className="font-bold text-gray-800">{userName}</span>? 
+          <p className="text-red-500 text-xs mt-2 font-semibold">This action cannot be undone.</p>
+        </div>
+      ),
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",  
+      confirmButtonText: "Yes, Delete!",
+      cancelButtonText: "Cancel",
+      reverseButtons: true, 
+      background: "#ffffff",
+      customClass: {
+        popup: "rounded-xl shadow-xl border border-gray-100 p-6",
+        title: "font-bold text-gray-900 text-xl",
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.delete(`/users/${userId}`, {
+          onBefore: () => {
+            MySwal.fire({
+              title: "Processing...",
+              allowOutsideClick: false,
+              didOpen: () => MySwal.showLoading(),
+            });
+          },
+          onSuccess: () => {
+            MySwal.fire({
+              title: "Success!",
+              text: "The user has been deleted from the system.",
+              icon: "success",
+              confirmButtonColor: "#4f46e5", 
+              timer: 1500, 
+            });
+          },
+          onError: () => {
+            MySwal.fire({
+              title: "Failed!",
+              text: "An error occurred while trying to delete the user.",
+              icon: "error",
+              confirmButtonColor: "#4f46e5",
+            });
+          }
+        });
+      }
+    });
   };
   return (
     <div>
       <h2 className="text-lg font-semibold mb-4">Users</h2>
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full text-left border-collapse divide-y divide-gray-100">
+        <thead className="bg-emerald-50/60 text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th className="p-4 text-sm font-semibold text-emerald-900">Name</th>
+            <th className="p-4 text-sm font-semibold text-emerald-900">Email</th>
+            <th className="p-4 text-sm font-semibold text-emerald-900">Actions</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-gray-100">
           {users.map((user) => (
-            <tr key={user.id}>
+            <tr key={user.id} className="hover:bg-emerald-50/20 ">
               <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
               <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <button
                   onClick={() => onEdit(user)}
-                  className="text-blue-500 hover:text-blue-700"
+                  className="bg-blue-500 text-white hover:bg-blue-700 py-1 px-3 rounded"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => setDeleteId(user.id)}
-                  className="ml-4 text-red-500 hover:text-red-700"
+                  onClick={() => confirmDelete(user.id, user.name)}
+                  className="bg-red-500 text-white hover:bg-red-700 ml-4 py-1 px-3 rounded"
                 >
                   Delete
                 </button>
@@ -51,30 +101,8 @@ const UsersTable = ({ users, onEdit }: Props) => {
           ))}
         </tbody>
       </table>
-      {deleteId && (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-80">
-            <h3 className="font-bold mb-2">Hapus User?</h3>
-            <p className="text-sm text-gray-500 mb-4">
-                Tindakan ini tidak bisa dibatalkan.
-            </p>
-            <div className="flex gap-2 justify-end">
-                <button 
-                    onClick={() => setDeleteId(null)}
-                    className="px-4 py-2 text-sm border rounded hover:bg-gray-50"
-                >
-                    Batal
-                </button>
-                <button 
-                    onClick={handleDelete}
-                    className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                    Hapus
-                </button>
-            </div>
-        </div>
-    </div>
-)}
+      
+
     </div>
     
   )
