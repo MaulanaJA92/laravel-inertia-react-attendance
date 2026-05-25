@@ -45,7 +45,7 @@ class UserController extends Controller
             'password' => bcrypt($password),
             'role' => 'user',
         ]);
-        // Mail::to($request->email)->send(new NewUserMail($user->name, $password));
+        Mail::to($request->email)->send(new NewUserMail($user->name, $password));
         return back();
     }
 
